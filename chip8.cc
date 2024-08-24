@@ -103,24 +103,24 @@ void chip8::emulateCycle()
 
         case 0x4000:
             // If (Vx != NN) skipea la siguiente instrucción.
-            if ((opcode & 0x00FF) != V[(opcode & 0x0F00)])
+            if ((opcode & 0x00FF) != V[(opcode & 0x0F00) >> 8])
                 pc += 4; 
         break;
 
         case 0x5000:
             // If (Vx == Vy) skipea la siguiente instrucción.
-            if (V[(opcode & 0x0F00)] == V[(opcode & 0x00F0)])
+            if (V[(opcode & 0x0F00) >> 8] == V[(opcode & 0x00F0) >> 4])
                 pc += 4;  
         break;
 
         case 0x6000:
             // Setea Vx a NN.
-            V[(opcode & 0x0F00)] = opcode & 0x00FF;
+            V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
         break;
 
         case 0x7000:
             // Añade NN a Vx (No cambia la Carry Flag).
-            V[(opcode & 0x0F00)] += opcode & 0x00FF;
+            V[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
         break;
 
         case 0x8000:
@@ -128,26 +128,36 @@ void chip8::emulateCycle()
             {
                 case 0x0000:
                     // Setea Vx = Vy
-                    V[(opcode & 0x0F00)] = V[(opcode & 0x00F0)];
+                    V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
                 break;
 
                 case 0x0001:
                     // Vx |= Vy
-                    V[(opcode & 0x0F00)] |= V[(opcode & 0x00F0)];
+                    V[(opcode & 0x0F00) >> 8] |= V[(opcode & 0x00F0) >> 4];
                 break;
 
                 case 0x0002:
                     // Vx &= Vy
-                    V[(opcode & 0x0F00)] &= V[(opcode & 0x00F0)];
+                    V[(opcode & 0x0F00) >> 8] &= V[(opcode & 0x00F0) >> 4];
                 break;
 
                 case 0x0003:
                     // Vx ^= Vy 
-                    V[(opcode & 0x0F00)] ^= V[(opcode & 0x00F0)];
+                    V[(opcode & 0x0F00) >> 8] ^= V[(opcode & 0x00F0) >> 4];
                 break;
 
                 case 0x0004:
                     // Vx += Vy <- Si hay overflow se setea a 1 VF, a 0 si no.
+                    // Checkea si la suma de VX + VY > 255 (11111111) ya que los registros
+                    // son de 1 byte por lo tanto solo pueden guardar 8 bits. 
+                    // Si la suma es mayor a 255 se pondría en 0 por overflow.
+                    // La condicion es: Vx + Vy > 255 (0xFF) => Vx > 255 (0xFF) - Vy
+                    if(V[(opcode & 0x00F0) >> 4] > (0xFF - V[(opcode & 0x0F00) >> 8]))
+                      V[0xF] = 1; // carry
+                    else
+                      V[0xF] = 0;
+                    V[(opcode & 0x0F00) >> 8] += V[(opcode & 0x00F0) >> 4];
+                    pc += 2;
                 break;
 
                 case 0x0005:
@@ -175,7 +185,7 @@ void chip8::emulateCycle()
 
         case 0x9000:
             // if (Vx != Vy) skipea le siguiente instrucción.
-            if (V[(opcode & 0x0F00)] != V[(opcode & 0x00F0)])
+            if (V[(opcode & 0x0F00) >> 8] != V[(opcode & 0x00F0) >> 4])
                 pc += 4;  
         break;
 
