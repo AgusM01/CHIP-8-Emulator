@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include "chip8.hh"
 // Preparamos el estado del sistema.
 // Se empieza limpiando la memoria y reseteando los registros a cero.
@@ -40,6 +42,9 @@ void chip8::initialize()
     delay_timer = 0;
     sound_timer = 0;
 
+    // Funcion para utilizar el tiempo de la pc como semilla de 
+    // números pseudorandom.
+    srand(time(NULL));
     return;
 
 }
@@ -151,7 +156,7 @@ void chip8::emulateCycle()
                     // Checkea si la suma de VX + VY > 255 (11111111) ya que los registros
                     // son de 1 byte por lo tanto solo pueden guardar 8 bits. 
                     // Si la suma es mayor a 255 se pondría en 0 por overflow.
-                    // La condicion es: Vx + Vy > 255 (0xFF) => Vx > 255 (0xFF) - Vy
+                    // La condicion es: Vx + Vy > 255 (0xFF) => Vy > 255 (0xFF) - Vx
                     if(V[(opcode & 0x00F0) >> 4] > (0xFF - V[(opcode & 0x0F00) >> 8]))
                       V[0xF] = 1; // carry
                     else
@@ -162,20 +167,40 @@ void chip8::emulateCycle()
 
                 case 0x0005:
                     // Vx -= Vy <- Se setea VF a 0 si hay underflow y a 1 si no.
+                    // El underflow se produce cuando Vx - Vy < 0 => Vy > Vx
+                    if(V[(opcode & 0x00F0) >> 4] > V[(opcode & 0x0F00) >> 8])
+                      V[0xF] = 0; // underflow
+                    else
+                      V[0xF] = 1;
+                    V[(opcode & 0x0F00) >> 8] -= V[(opcode & 0x00F0) >> 4];
+                    pc += 2;
                 break;
 
                 case 0x0006:
                     // Vx >>= 1 <- Guarda el bit menos significativo de Vx previo al
                     // shift en VF.
+                    V[0xF] &= 0;
+                    V[0xF] = V[(opcode & 0x0F00) >> 8] & 0x0001;
+                    V[(opcode & 0x0F00) >> 8] >>= 1;
                 break;
 
                 case 0x0007:
                     // Vx = Vy - Vx <- Se setea VF a 0 si hay underflow y a 1 si no.
+                    if(V[(opcode & 0x00F0) >> 4] > V[(opcode & 0x0F00) >> 8])
+                      V[0xF] = 0; // underflow
+                    else
+                      V[0xF] = 1;
+                    V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4] - V[(opcode & 0x0F00) >> 8];
+                    pc += 2;
                 break;
 
                 case 0x000E:
                     // Vx <<= 1 <- Setea VF a 1 si el bst de VX previo al shift estaba 
                     // seteado. A 0 si no estaba.
+                    if(V[(opcode & 0x0F00) >> 8] & 0x8000)
+                        V[0xF] = 1;
+                    else 
+                        V[0xF] = 0;
                 break;
                 
                 default:
@@ -203,6 +228,7 @@ void chip8::emulateCycle()
 
         case 0xC000:
             // VX = rand() & NN 
+            V[(opcode & 0x0F00) >> 8] = (rand() % 255) & (opcode & 0x00FF);
         break;
 
         case 0xD000:
