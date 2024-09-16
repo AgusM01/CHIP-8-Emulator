@@ -94,10 +94,10 @@ void chip8::emulateCycle()
         break;
         
         case 0x2000:
-            // Llama a la subrutina en que esta en la addr. NNN.
-            stack[sp] = pc;
-            ++sp;
-            pc = opcode & 0x0FFF;
+            // Llama a la subrutina que esta en la addr. NNN.
+            stack[sp] = pc; // Guardo la direc. actual.
+            ++sp; // Aumento el sp para "espacio en stack"
+            pc = opcode & 0x0FFF; // Muevo el pc a la subrutina indicada
         break;
 
         case 0x3000:
@@ -215,7 +215,7 @@ void chip8::emulateCycle()
         break;
 
         case 0xA000:
-            //ANNN: Sets I to the address NNN
+            // ANNN: Sets I to the address NNN
             // Execute opcode
             I = opcode & 0x0FFF;
             pc += 2;
@@ -257,6 +257,7 @@ void chip8::emulateCycle()
             switch (opcode & 0x00FF){
                 case 0x0007:
                     // Vx = delay_timer value;
+                    V[opcode & 0x0F00 >> 8] = delay_timer;
                 break;
 
                 case 0x000A:
@@ -265,14 +266,17 @@ void chip8::emulateCycle()
 
                 case 0x0015:
                     // delay_timer = Vx;
+                    delay_timer = V[opcode & 0x0F00 >> 8];
                 break;
 
                 case 0x0018:
                     // sound_timer = Vx;
+                    sound_timer = V[opcode & 0x0F00 >> 8];
                 break;
 
                 case 0x001E:
                     // Indice = Indice + VX;
+                    I = I + V[opcode & 0x0F00 >> 8];
                 break;
 
                 case 0x0029:
@@ -284,16 +288,26 @@ void chip8::emulateCycle()
                     // poniendo las centenas en la posición de memoria I,
                     // las decenas en I + 1 y
                     // las unidades en I + 2;
+                    memory[I]     = V[(opcode & 0x0F00) >> 8] / 100;
+                    memory[I + 1] = (V[(opcode & 0x0F00) >> 8] / 10) % 10;
+                    memory[I + 2] = (V[(opcode & 0x0F00) >> 8] % 100) % 10;
+                    pc += 2;
+
                 break;
 
                 case 0x0055:
                     // Almacena el contenido de V0 a VX en la memoria empezando
                     // por la dirección I.
+                    for (int i = 0; i < (opcode & 0x0F00 >> 8); i++)
+                        memory[I + i] = V[opcode & 0x0F00 >> 8];
+
                 break;
 
                 case 0x0065:
                     // Almacena el contenido de la dirección de memoria I
                     // en los registros del V0 al Vx.
+                    for (int i = 0; i < (opcode & 0x0F00 >> 8); i++)
+                        V[opcode & 0x0F00 >> 8] = memory[I + i];
                 break;
 
                 default:
