@@ -233,6 +233,22 @@ void chip8::emulateCycle()
 
         case 0xD000:
             // Dibuja en las coordenadas dadas.
+	    // Dibuja un sprite en las coordenadas (Vx, Vy) que tiene un ancho de 8 pixeles 
+	    // y una altura de N pixeles. Cada fila de 8 pixeles es leída codificada en bits
+	    // empezando de la dirección de memoria I; El valor de I no cambia luego de la 
+	    // ejecución de esta instrucción. Como se describió anteriormente, VF es seteado 
+	    // a 1 si algun píxel en la pantalla es cambiado de set a unset cuando el spirte
+	    // es dibujado, y a 0 si eso no pasa.
+
+	    // El estado de cada píxel es seteado usando una operación XOR bit a bit.
+	    // Esto significa que compararemos el estado actual del píxel con el valor
+	    // actual en la memoria. Si el estado actual es diferente del valor en
+	    // la memoria, el valor del bit será 1. Si ambos valores coinciden, el valor
+	    // del bit será 0.
+
+	
+
+
         break;
 
         case 0xE000:

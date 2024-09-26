@@ -14,6 +14,8 @@ private:
     
     // Hay un registro índice I y un program counter PC el cual puede 
     // tener valores desde 0x000 hasta 0xFFF.
+    // El registro índice es un registro que almacena direcciones de memoria.
+    // durante la ejecucuión del programa.
     unsigned short I;
     unsigned short pc; 
     
