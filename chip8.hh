@@ -100,7 +100,8 @@ public:
     
     // Ciclo de emulación: fetch/decode/update-timers.
     void emulateCycle();
-
+    
+    int drawFlag;
 
 };
 

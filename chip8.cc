@@ -70,7 +70,7 @@ void chip8::emulateCycle()
     // opcode & 1111000000000000
     switch (opcode & 0xF000) 
     {
-        case 0x0000: 
+        case 0x0000:{ 
             switch (opcode)
             {
                 case 0x00E0:
@@ -87,71 +87,71 @@ void chip8::emulateCycle()
                     // Call machine code routine at addr NNN.
             }
         break;
-        
-        case 0x1000:
+                    }
+        case 0x1000:{
             // goto NNN.
             pc = opcode & 0x0FFF;
-        break;
+        break;}
         
-        case 0x2000:
+        case 0x2000:{
             // Llama a la subrutina que esta en la addr. NNN.
             stack[sp] = pc; // Guardo la direc. actual.
             ++sp; // Aumento el sp para "espacio en stack"
             pc = opcode & 0x0FFF; // Muevo el pc a la subrutina indicada
-        break;
+        break;}
 
-        case 0x3000:
+        case 0x3000:{
             // if (Vx == NN) skipea la siguiente instrucción.
             if ((opcode & 0x00FF) == V[(opcode & 0x0F00)])
                 pc += 4;
-        break;
+        break;}
 
-        case 0x4000:
+        case 0x4000:{
             // If (Vx != NN) skipea la siguiente instrucción.
             if ((opcode & 0x00FF) != V[(opcode & 0x0F00) >> 8])
                 pc += 4; 
-        break;
+        break;}
 
-        case 0x5000:
+        case 0x5000:{
             // If (Vx == Vy) skipea la siguiente instrucción.
             if (V[(opcode & 0x0F00) >> 8] == V[(opcode & 0x00F0) >> 4])
                 pc += 4;  
-        break;
+        break;}
 
-        case 0x6000:
+        case 0x6000:{
             // Setea Vx a NN.
             V[(opcode & 0x0F00) >> 8] = opcode & 0x00FF;
-        break;
+        break;}
 
-        case 0x7000:
+        case 0x7000:{
             // Añade NN a Vx (No cambia la Carry Flag).
             V[(opcode & 0x0F00) >> 8] += opcode & 0x00FF;
-        break;
+        break;}
 
-        case 0x8000:
+        case 0x8000:{
             switch (opcode & 0x000F)
             {
-                case 0x0000:
+                case 0x0000:{
                     // Setea Vx = Vy
                     V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4];
-                break;
+                break;}
 
-                case 0x0001:
+                case 0x0001:{
                     // Vx |= Vy
                     V[(opcode & 0x0F00) >> 8] |= V[(opcode & 0x00F0) >> 4];
-                break;
+                break;}
 
-                case 0x0002:
+                case 0x0002:{
                     // Vx &= Vy
                     V[(opcode & 0x0F00) >> 8] &= V[(opcode & 0x00F0) >> 4];
-                break;
+                break;}
 
-                case 0x0003:
+                case 0x0003:{
                     // Vx ^= Vy 
                     V[(opcode & 0x0F00) >> 8] ^= V[(opcode & 0x00F0) >> 4];
-                break;
+                break;}
 
-                case 0x0004:
+                case 0x0004:{
                     // Vx += Vy <- Si hay overflow se setea a 1 VF, a 0 si no.
                     // Checkea si la suma de VX + VY > 255 (11111111) ya que los registros
                     // son de 1 byte por lo tanto solo pueden guardar 8 bits. 
@@ -163,9 +163,9 @@ void chip8::emulateCycle()
                       V[0xF] = 0;
                     V[(opcode & 0x0F00) >> 8] += V[(opcode & 0x00F0) >> 4];
                     pc += 2;
-                break;
+                break;}
 
-                case 0x0005:
+                case 0x0005:{
                     // Vx -= Vy <- Se setea VF a 0 si hay underflow y a 1 si no.
                     // El underflow se produce cuando Vx - Vy < 0 => Vy > Vx
                     if(V[(opcode & 0x00F0) >> 4] > V[(opcode & 0x0F00) >> 8])
@@ -174,17 +174,17 @@ void chip8::emulateCycle()
                       V[0xF] = 1;
                     V[(opcode & 0x0F00) >> 8] -= V[(opcode & 0x00F0) >> 4];
                     pc += 2;
-                break;
+                break;}
 
-                case 0x0006:
+                case 0x0006:{
                     // Vx >>= 1 <- Guarda el bit menos significativo de Vx previo al
                     // shift en VF.
                     V[0xF] &= 0;
                     V[0xF] = V[(opcode & 0x0F00) >> 8] & 0x0001;
                     V[(opcode & 0x0F00) >> 8] >>= 1;
-                break;
+                break;}
 
-                case 0x0007:
+                case 0x0007:{
                     // Vx = Vy - Vx <- Se setea VF a 0 si hay underflow y a 1 si no.
                     if(V[(opcode & 0x00F0) >> 4] > V[(opcode & 0x0F00) >> 8])
                       V[0xF] = 0; // underflow
@@ -192,66 +192,89 @@ void chip8::emulateCycle()
                       V[0xF] = 1;
                     V[(opcode & 0x0F00) >> 8] = V[(opcode & 0x00F0) >> 4] - V[(opcode & 0x0F00) >> 8];
                     pc += 2;
-                break;
+                break;}
 
-                case 0x000E:
+                case 0x000E:{
                     // Vx <<= 1 <- Setea VF a 1 si el bst de VX previo al shift estaba 
                     // seteado. A 0 si no estaba.
                     if(V[(opcode & 0x0F00) >> 8] & 0x8000)
                         V[0xF] = 1;
                     else 
                         V[0xF] = 0;
-                break;
+                break;}
                 
                 default:
                     printf ("Unknown opcode: 0x%X\n", opcode);
             }
-        break;
+        break;}
 
-        case 0x9000:
+        case 0x9000:{
             // if (Vx != Vy) skipea le siguiente instrucción.
             if (V[(opcode & 0x0F00) >> 8] != V[(opcode & 0x00F0) >> 4])
                 pc += 4;  
-        break;
+        break;}
 
-        case 0xA000:
+        case 0xA000:{
             // ANNN: Sets I to the address NNN
             // Execute opcode
             I = opcode & 0x0FFF;
             pc += 2;
-        break;
+        break;}
 
-        case 0xB000:
+        case 0xB000:{
             // Salta a la dirección NNN + V0.
             pc += opcode & 0x0FFF + V[0];
-        break;
+        break;}
 
-        case 0xC000:
+        case 0xC000:{
             // VX = rand() & NN 
             V[(opcode & 0x0F00) >> 8] = (rand() % 255) & (opcode & 0x00FF);
-        break;
+        break;}
 
-        case 0xD000:
+        case 0xD000:{
             // Dibuja en las coordenadas dadas.
-	    // Dibuja un sprite en las coordenadas (Vx, Vy) que tiene un ancho de 8 pixeles 
-	    // y una altura de N pixeles. Cada fila de 8 pixeles es leída codificada en bits
-	    // empezando de la dirección de memoria I; El valor de I no cambia luego de la 
-	    // ejecución de esta instrucción. Como se describió anteriormente, VF es seteado 
-	    // a 1 si algun píxel en la pantalla es cambiado de set a unset cuando el spirte
-	    // es dibujado, y a 0 si eso no pasa.
+	          // Dibuja un sprite en las coordenadas (Vx, Vy) 
+            // que tiene un ancho de 8 pixeles 
+	          // y una altura de N pixeles. 
+            // Cada fila de 8 pixeles es leída codificada en bits
+	          // empezando de la dirección de memoria I; 
+            // El valor de I no cambia luego de la 
+	          // ejecución de esta instrucción. 
+            // Como se describió anteriormente, VF es seteado 
+	          // a 1 si algun píxel en la pantalla es cambiado de set a unset 
+            // cuando el spirte
+	          // es dibujado, y a 0 si eso no pasa.
 
-	    // El estado de cada píxel es seteado usando una operación XOR bit a bit.
-	    // Esto significa que compararemos el estado actual del píxel con el valor
-	    // actual en la memoria. Si el estado actual es diferente del valor en
-	    // la memoria, el valor del bit será 1. Si ambos valores coinciden, el valor
-	    // del bit será 0.
+	          // El estado de cada píxel es seteado usando una operación XOR bit a bit.
+	          // Esto significa que compararemos el estado actual del píxel con el valor
+	          // actual en la memoria. Si el estado actual es diferente del valor en
+	          // la memoria, el valor del bit será 1. Si ambos valores coinciden, el valor
+	          // del bit será 0.
+            
+            unsigned short x = V[(opcode & 0x0F00) >> 8];
+            unsigned short y = V[(opcode & 0x00F0) >> 4];
+            unsigned short height = opcode & 0x000F;
+            unsigned short pixel;
 
-	
+            V[0xF] = 0;
+            for (int yline = 0; yline < height; yline++)
+            {
+                pixel = memory[I + yline];
+                for (int xline = 0; xline < 8; xline++)
+                {
+                    if ((pixel & (0x80 >> xline)) != 0)
+                    {
+                        if (gfx[(x + xline + ((y + yline) * 64))] == 1)
+                            V[0xF] = 1;
+                        gfx[(x + xline + ((y + yline) * 64))] ^= 1;
+                    }
+                }
+            }
+            drawFlag = true;
+            pc +=2;
+        break;}
 
-
-        break;
-
-        case 0xE000:
+        case 0xE000:{
             switch (opcode & 0x00FF)
             {
                 case 0x009E:
@@ -267,39 +290,39 @@ void chip8::emulateCycle()
                 default:
                     printf ("Unknown opcode: 0x%X\n", opcode);
             } 
-        break;
+        break;}
         
-        case 0xF000:
+        case 0xF000:{
             switch (opcode & 0x00FF){
-                case 0x0007:
+                case 0x0007:{
                     // Vx = delay_timer value;
                     V[opcode & 0x0F00 >> 8] = delay_timer;
-                break;
+                break;}
 
-                case 0x000A:
+                case 0x000A:{
                     // Espera por una tecla presionada y la almacena.
-                break;
+                break;}
 
-                case 0x0015:
+                case 0x0015:{
                     // delay_timer = Vx;
                     delay_timer = V[opcode & 0x0F00 >> 8];
-                break;
+                break;}
 
-                case 0x0018:
+                case 0x0018:{
                     // sound_timer = Vx;
                     sound_timer = V[opcode & 0x0F00 >> 8];
-                break;
+                break;}
 
-                case 0x001E:
+                case 0x001E:{
                     // Indice = Indice + VX;
                     I = I + V[opcode & 0x0F00 >> 8];
-                break;
+                break;}
 
-                case 0x0029:
+                case 0x0029:{
                     // I = VX * largo Sprite Chip-8
-                break;
+                break;}
 
-                case 0x0033:
+                case 0x0033:{
                     // Guarda la representacion de Vx en formato humano.
                     // poniendo las centenas en la posición de memoria I,
                     // las decenas en I + 1 y
@@ -309,27 +332,27 @@ void chip8::emulateCycle()
                     memory[I + 2] = (V[(opcode & 0x0F00) >> 8] % 100) % 10;
                     pc += 2;
 
-                break;
+                break;}
 
-                case 0x0055:
+                case 0x0055:{
                     // Almacena el contenido de V0 a VX en la memoria empezando
                     // por la dirección I.
                     for (int i = 0; i < (opcode & 0x0F00 >> 8); i++)
                         memory[I + i] = V[opcode & 0x0F00 >> 8];
 
-                break;
+                break;}
 
-                case 0x0065:
+                case 0x0065:{
                     // Almacena el contenido de la dirección de memoria I
                     // en los registros del V0 al Vx.
                     for (int i = 0; i < (opcode & 0x0F00 >> 8); i++)
                         V[opcode & 0x0F00 >> 8] = memory[I + i];
-                break;
+                break;}
 
                 default:
                     printf ("Unknown opcode: 0x%X\n", opcode);
         }
-        break;
+        break;}
 
         default:
             printf ("Unknown opcode: 0x%X\n", opcode);
